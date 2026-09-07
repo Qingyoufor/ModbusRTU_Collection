@@ -36,6 +36,7 @@ namespace Server
             // builder.Services.AddXxx() → 注册阶段，往容器里放服务
             // builder.Build()        → 构建阶段，生成 IServiceProvider
             // app.UseXxx() / MapXxx() → 使用阶段，从容器取出服务
+            //dfbjkds
 
             // ====== EF Core DbContext ======
             builder.Services.AddDbContext<SmartFactoryDbContext>(options =>
