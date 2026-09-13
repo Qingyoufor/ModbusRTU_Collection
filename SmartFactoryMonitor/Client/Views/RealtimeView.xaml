@@ -30,7 +30,7 @@
                        FontWeight="Bold"
                        Margin="10,10"/>
 
-            <TreeView ItemsSource="{Binding ProductionLineTreeNodes}" Margin="5">
+            <TreeView ItemsSource="{Binding ProductionLineTreeNodes}" Margin="5" BorderThickness="0">
                 <i:Interaction.Triggers>
                     <i:EventTrigger EventName="SelectedItemChanged">
                         <i:InvokeCommandAction Command="{Binding SelectedItemChangedCommand}"

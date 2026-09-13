@@ -24,7 +24,8 @@
                        FontSize="15" FontWeight="Bold" Margin="5"/>
 
             <TreeView DockPanel.Dock="Top" Height="220"
-                      ItemsSource="{Binding ProductionLineTreeNodes}">
+                      ItemsSource="{Binding ProductionLineTreeNodes}"
+                      BorderThickness="0">
                 <i:Interaction.Triggers>
                     <i:EventTrigger EventName="SelectedItemChanged">
                         <i:InvokeCommandAction Command="{Binding SelectedItemChangedCommand}"
@@ -52,7 +53,8 @@
             <TextBlock Text="测点列表" FontSize="14" FontWeight="Bold" Margin="5,10,5,5" DockPanel.Dock="Top"/>
             <ListBox ItemsSource="{Binding DataPoints}"
                      SelectedItem="{Binding SelectedPoint}"
-                     DisplayMemberPath="Name"/>
+                     DisplayMemberPath="Name"
+                     BorderThickness="0"/>
         </DockPanel>
 
         <!-- 右侧：查询条件 + 统计 + 趋势图 -->

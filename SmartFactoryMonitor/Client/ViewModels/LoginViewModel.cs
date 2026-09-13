@@ -1,12 +1,5 @@
-﻿
-using Client.Service;
-using Client.Views;
-using System;
-using System.Collections.Generic;
+﻿using Client.Service;
 using System.Net.Http;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows;
 using System.Windows.Controls;
 
 namespace Client.ViewModels

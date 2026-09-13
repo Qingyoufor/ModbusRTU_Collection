@@ -96,15 +96,24 @@
                                         BorderBrush="#E8E8E8"
                                         BorderThickness="0,0,0,1"
                                         SnapsToDevicePixels="True">
-                                    <SelectiveScrollingGrid>
-                                        <SelectiveScrollingGrid.ColumnDefinitions>
-                                            <ColumnDefinition Width="Auto"/>
-                                            <ColumnDefinition Width="*"/>
-                                        </SelectiveScrollingGrid.ColumnDefinitions>
+                                    <Grid>
+                                        <SelectiveScrollingGrid>
+                                            <SelectiveScrollingGrid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </SelectiveScrollingGrid.ColumnDefinitions>
 
-                                        <DataGridRowHeader Grid.Column="0" Visibility="Collapsed"/>
-                                        <DataGridCellsPresenter Grid.Column="1"/>
-                                    </SelectiveScrollingGrid>
+                                            <DataGridRowHeader Grid.Column="0" Visibility="Collapsed"/>
+                                            <DataGridCellsPresenter Grid.Column="1"/>
+                                        </SelectiveScrollingGrid>
+
+                                        <!-- 选中指示条：悬浮在最左侧，不占布局 -->
+                                        <Border x:Name="SelectionIndicator"
+                                                Width="3"
+                                                HorizontalAlignment="Left"
+                                                Background="#1E88E5"
+                                                Opacity="0"/>
+                                    </Grid>
                                 </Border>
 
                                 <ControlTemplate.Triggers>
@@ -114,6 +123,12 @@
 
                                     <Trigger Property="AlternationIndex" Value="1">
                                         <Setter TargetName="RowBorder" Property="Background" Value="#F9F9F9"/>
+                                    </Trigger>
+
+                                    <!-- 选中行高亮提示：浅蓝背景 + 左侧蓝色指示条 -->
+                                    <Trigger Property="IsSelected" Value="True">
+                                        <Setter TargetName="RowBorder" Property="Background" Value="#E3F2FD"/>
+                                        <Setter TargetName="SelectionIndicator" Property="Opacity" Value="1"/>
                                     </Trigger>
                                 </ControlTemplate.Triggers>
                             </ControlTemplate>

@@ -3,11 +3,11 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:prism="http://prismlibrary.com/"
         prism:ViewModelLocator.AutoWireViewModel="True"
-        Title="智能工厂监控系统" Height="600" Width="1000"
+        Title="工业设备生产与监控系统" Height="600" Width="1000"
         WindowStartupLocation="CenterScreen">
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="200" />
+            <ColumnDefinition Width="0.2*" />
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
 
@@ -18,7 +18,7 @@
                  BorderThickness="0">
             <ListBox.ItemTemplate>
                 <DataTemplate>
-                    <TextBlock Text="{Binding Header}" Margin="10,8" FontSize="14" FontWeight="Bold"/>
+                    <TextBlock Text="{Binding Header}" Margin="10,8" FontSize="14" FontWeight="Bold" />
                 </DataTemplate>
             </ListBox.ItemTemplate>
         </ListBox>

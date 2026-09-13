@@ -1,12 +1,8 @@
 ﻿using Client.Models.Dtos;
-using System;
-using System.Collections.Generic;
 using System.Net;
-using System.Net.Cache;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
-using System.Text;
 using System.Text.Json;
 
 namespace Client.Infrastructure
@@ -29,41 +25,48 @@ namespace Client.Infrastructure
 
         public HttpClientBase(TokenStore tokenStore)
         {
-            // 和相对路径进行拼接，如"/api/auth/refresh"
+            // 和相对路径进行拼接，如"api/auth/refresh"
             _httpClient = new HttpClient { BaseAddress = new Uri(BaseUrl) };
             _tokenStore = tokenStore;
         }
 
         //===========公开的 HTTP CRUD 方法==========
+
         public async Task<HttpResponseMessage> GetAsync(string url)
         {
             return await SendAsync(() => new HttpRequestMessage(HttpMethod.Get, url)); 
         }
 
+        /// <summary>POST 请求，每次重建 request，避免 401 刷新重放时复用同一实例（一次性流 body 会崩）</summary>
         public async Task<HttpResponseMessage> PostAsync<T>(string url,T body)
         {
-            var requset = new HttpRequestMessage(HttpMethod.Post, url)
+            return await SendAsync(() => new HttpRequestMessage(HttpMethod.Post, url)
             {
                 Content = JsonContent.Create(body, options: _jsonOptions)
-            };
-            return await SendAsync(() => requset);
+            }); 
         }
 
+        /// <summary>PUT 请求，同 POST，重放时需重建新的 request 实例</summary>
         public async Task<HttpResponseMessage> PutAsync<T>(string url, T body)
         {
-            var requset = new HttpRequestMessage(HttpMethod.Put, url)
+            return await SendAsync(() => new HttpRequestMessage(HttpMethod.Put, url)
             {
                 Content = JsonContent.Create(body, options: _jsonOptions)
-            };
-            return await SendAsync(() => requset);
+            }); 
         }
 
+        /// <summary>DELETE 请求，无 body，重放安全</summary>
         public async Task<HttpResponseMessage> DeleteAsync(string url)
         {
             return await SendAsync(() => new HttpRequestMessage(HttpMethod.Delete, url));
         }
 
+
+
+
         // ======核心发送逻辑=======
+
+        /// <summary>统一请求入口：自动附加 token，遇 401 刷新后重放一次</summary>
         private async Task<HttpResponseMessage> SendAsync(Func<HttpRequestMessage> requestFactory) 
         {
             // 1.首次发送
@@ -74,9 +77,9 @@ namespace Client.Infrastructure
             // 2.如果401，尝试刷新Token
             if(respone.StatusCode == HttpStatusCode.Unauthorized)
             {
-                var isRefresh = await TryRefreshTokenAsync();
+                var success = await TryRefreshTokenAsync();
                 // 如果刷新成功，则重放原请求
-                if (isRefresh)
+                if (success)
                 {
                     request = requestFactory();
                     AttachToken(request);
@@ -87,7 +90,7 @@ namespace Client.Infrastructure
             return respone;
         }
 
-        // 给请求附加token
+        /// <summary>给请求附加 Bearer token（token 非空时才带上）</summary>
         private void AttachToken(HttpRequestMessage request) 
         {
             var accessToken = _tokenStore.AccessToken;
@@ -97,7 +100,7 @@ namespace Client.Infrastructure
             }
         }
 
-        // 尝试刷新token
+        /// <summary>通过 refresh token 换取新 token，成功返回 true（多线程下异步锁互斥，只刷新一次）</summary>
         private async Task<bool> TryRefreshTokenAsync() 
         {
             await _refreshTokenLock.WaitAsync(); // 获取钥匙(锁)
