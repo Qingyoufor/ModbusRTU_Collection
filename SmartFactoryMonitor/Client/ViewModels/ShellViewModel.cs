@@ -1,12 +1,5 @@
-
 using Client.Models;
-using Client.Views;
-using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Text;
 using System.Windows;
-using System.Windows.Controls;
 
 namespace Client.ViewModels
 {
@@ -16,13 +9,13 @@ namespace Client.ViewModels
 
         // 选中元素跳转到viewName对应的视图
         private MenuItemModel? _selectedMenuItem;
-        public ObservableCollection<MenuItemModel> MenuItems { get; }
+        public List<MenuItemModel> MenuItems { get; }
 
         public ShellViewModel(IRegionManager regionManager)
         {
             _regionManager = regionManager;
 
-            MenuItems = new ObservableCollection<MenuItemModel>
+            MenuItems = new List<MenuItemModel>
             {
                 new MenuItemModel { Header = "实时监控", ViewName = "RealtimeView" },
                 new MenuItemModel { Header = "设备管理", ViewName = "DeviceListView" }, // Module里的DeviceListView
@@ -31,7 +24,9 @@ namespace Client.ViewModels
                 new MenuItemModel { Header = "系统设置", ViewName = "SettingsView" }
             };
 
-            // 延迟加载
+            // 延迟到视图加载完成后再设默认选中，而非构造函数里直接赋值：
+            // 1) 构造函数时机 MainRegion 尚未注册，立即 RequestNavigate 会失败导致首屏空白；
+            // 2) ListBox.SelectedItem 默认 TwoWay，初始化时可能把 null 写回覆盖此处的默认值。
             Application.Current.Dispatcher.InvokeAsync(() =>
             {
                 SelectedMenuItem = MenuItems[0];
@@ -45,13 +40,9 @@ namespace Client.ViewModels
             {
                 if (SetProperty(ref _selectedMenuItem,value) && value != null)
                 {
-                    NavigateTo(value.ViewName); 
+                    _regionManager.RequestNavigate("MainRegion", value.ViewName);
                 }
             }
-        }
-        private void NavigateTo(string viewName)
-        {
-            _regionManager.RequestNavigate("MainRegion", viewName);
         }
     }
 }

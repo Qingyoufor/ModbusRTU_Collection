@@ -19,7 +19,7 @@ namespace Client
         // 必须显式调用 RegionManager.SetRegionManager(视图实例, regionManager) 进行绑定。
         protected override Window CreateShell()
         {
-            return Container.Resolve<LoginView>();
+            return Container.Resolve<ShellView>();
         }
 
         protected override void RegisterTypes(IContainerRegistry containerRegistry)

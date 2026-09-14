@@ -3,12 +3,12 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+
              xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
              xmlns:local="clr-namespace:Client.Models"
              xmlns:prism="http://prismlibrary.com/" 
              xmlns:lvc="clr-namespace:LiveChartsCore.SkiaSharpView.WPF;assembly=LiveChartsCore.SkiaSharpView.WPF"
              mc:Ignorable="d"
-             prism:ViewModelLocator.AutoWireViewModel="True"
              Background="White"
              d:DesignHeight="600" d:DesignWidth="900">
     <!--
@@ -24,7 +24,7 @@
         
         <!--左侧设备树-->
         <DockPanel Grid.Column="0">
-            <TextBlock Text="设备导航"
+            <TextBlock Text="设备树"
                        DockPanel.Dock="Top"
                        FontSize="15"
                        FontWeight="Bold"
@@ -147,10 +147,22 @@
                     <TextBlock Text="选择测点："
                                VerticalAlignment="Center"
                                Margin="0,0,10,0" />
-                    <ComboBox ItemsSource="{Binding TrendPointNames}"
-                              SelectedItem="{Binding SelectedTrendPoint}"
-                              Width="120"
-                              VerticalAlignment="Center" /> 
+                    <!-- 测点选择：用 ListBox（继承自 ItemsControl）横向排布，点击项即选中并切换图线 -->
+                    <ListBox ItemsSource="{Binding TrendPointNames}"
+                             SelectedItem="{Binding SelectedTrendPoint}"
+                             VerticalAlignment="Center"
+                             BorderThickness="0">
+                        <ListBox.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Orientation="Horizontal"/>
+                            </ItemsPanelTemplate>
+                        </ListBox.ItemsPanel>
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding}" Margin="8,4"/>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox> 
                 </StackPanel>
 
                 <lvc:CartesianChart Grid.Row="1"

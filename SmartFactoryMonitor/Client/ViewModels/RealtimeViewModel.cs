@@ -1,8 +1,8 @@
-﻿// Client/ViewModels/RealtimeViewModel.cs
-using Client.Models;
+﻿using Client.Models;
 using Client.Models.Dtos;
 using Client.Service;
 using LiveChartsCore;
+using LiveChartsCore.Defaults;
 using LiveChartsCore.SkiaSharpView;
 using LiveChartsCore.SkiaSharpView.Painting;
 using SkiaSharp;
@@ -29,7 +29,8 @@ namespace Client.ViewModels
 
         // ======== 趋势图相关 ========
         private const int MaxTrendPoints = 30;
-        private readonly Dictionary<int, ObservableCollection<double>> _trendDataCollections = new();
+        // 每个测点存带时间戳的点（DateTimePoint），固定 60 秒滚动窗口
+        private readonly Dictionary<int, ObservableCollection<DateTimePoint>> _trendDataCollections = new();
         private int _selectedTrendPointId = -1;
         private string _selectedTrendPoint = string.Empty;
         private string[] _trendPointNames = Array.Empty<string>();
@@ -56,7 +57,15 @@ namespace Client.ViewModels
             };
             TrendXAxes = new Axis[]
             {
-                new Axis{Name = "时间/秒",NameTextSize = 12,Labels = null}
+                // DateTimeAxis 是 LiveCharts 为时间序列提供的专用轴：自动按时间值绘制，图线才能正确显示
+                new DateTimeAxis(TimeSpan.FromSeconds(2), t => t.ToString("HH:mm:ss"))
+                {
+                    Name = "时间",
+                    NameTextSize = 10,
+                    // 标签斜放，避免完整时间戳横向挤占空间
+                    LabelsRotation = 45
+                    // 不设 MinLimit/MaxLimit：DateTimeAxis 自动按数据范围缩放，避免单位不匹配导致图线消失
+                }
             };
         }
 
@@ -131,10 +140,10 @@ namespace Client.ViewModels
             _selectedTrendPointId = device.DataPoints[0].DataPointId;
 
 
-            // 为每个测点创建独立的数据集合，并装入初始值
+            // 为每个测点创建独立的空数据集合，首个数据点由随后的 UpdateTrendCollections 统一追加
             foreach (var point in device.DataPoints)
             {
-                _trendDataCollections[point.DataPointId] = new ObservableCollection<double> { point.Value };
+                _trendDataCollections[point.DataPointId] = new ObservableCollection<DateTimePoint>();
             }
 
             UpdateTrendSeries(); // 绑定 Series → 第一个测点的数据集合
@@ -164,10 +173,12 @@ namespace Client.ViewModels
         /// <summary>为所有测点追加新数值（滑动窗口：超出 MaxTrendPoints 时移除最早的数据点）</summary>
         private void UpdateTrendCollections(RealtimeDeviceDataDto device)
         {
+            var now = DateTime.Now;
+
             foreach (var p in device.DataPoints)
             {
                 var collection = _trendDataCollections[p.DataPointId];
-                collection.Add(p.Value);
+                collection.Add(new DateTimePoint(now, p.Value));
 
                 // 滑动窗口：保持最多 30 个点（约 60 秒历史）
                 if (collection.Count > MaxTrendPoints)
@@ -189,13 +200,15 @@ namespace Client.ViewModels
 
             TrendSeries = new ISeries[]
             {
-                new LineSeries<double>
+                new LineSeries<DateTimePoint>
                 {
                     Values = values,
                     Stroke = new SolidColorPaint(SKColors.DodgerBlue) { StrokeThickness = 2 },
                     Fill = null,
-                    GeometryFill = null,
-                    GeometryStroke = null,
+                    // 显示数据点圆点：填充 + 描边 + 点大小
+                    GeometryFill = new SolidColorPaint(SKColors.DodgerBlue),
+                    GeometryStroke = new SolidColorPaint(SKColors.White) { StrokeThickness = 2 },
+                    GeometrySize = 8
                 }
             };
         }
@@ -258,8 +271,11 @@ namespace Client.ViewModels
         /// <summary>返回 true：重用当前视图实例，保持设备树状态</summary>
         public bool IsNavigationTarget(NavigationContext navigationContext) => true;
 
-        /// <summary>离开页面时停止定时器</summary>
-        public void OnNavigatedFrom(NavigationContext navigationContext) => StopTimer();
+        /// <summary>离开页面时不停止定时器：让实时数据与图线在后台持续刷新，切回时无缝衔接</summary>
+        public void OnNavigatedFrom(NavigationContext navigationContext)
+        {
+            // 定时器继续运行，保持后台轮询（IsNavigationTarget=true 保证本实例被缓存、不会销毁）
+        }
 
         /// <summary>进入页面时：首次加载设备树 + 启动定时器</summary>
         public void OnNavigatedTo(NavigationContext navigationContext)
@@ -289,13 +305,6 @@ namespace Client.ViewModels
                 _timer.Tick += OnRefreshTick;
                 _timer.Start();
             }
-        }
-
-        /// <summary>停止并释放定时器</summary>
-        private void StopTimer()
-        {
-            _timer?.Stop();
-            _timer = null;
         }
 
         // ======== 属性 ========
